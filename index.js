@@ -70,30 +70,36 @@ client.on("interactionCreate", async interaction => {
       const sub = interaction.options.getSubcommand();
 
       if (sub === "create") {
-        for (const r of Object.values(roles)) r.users = [];
-        locked = false;
+  await interaction.deferReply({ ephemeral: true });
 
-        const msg = await interaction.channel.send({
-          embeds: [buildEmbed()],
-          components: [buttonsRow()]
-        });
+  for (const r of Object.values(roles)) r.users = [];
+  locked = false;
 
-        signupMessageId = msg.id;
-        await interaction.reply({ content: "Clash signup created.", ephemeral: true });
-      }
+  const msg = await interaction.channel.send({
+    embeds: [buildEmbed()],
+    components: [buttonsRow()]
+  });
 
+  signupMessageId = msg.id;
+
+  await interaction.editReply("Clash signup created.");
+}
       if (sub === "lock") {
-        locked = true;
-        await interaction.reply({ content: "Signups locked.", ephemeral: true });
-      }
+  await interaction.deferReply({ ephemeral: true });
+  locked = true;
+  await interaction.editReply("Signups locked.");
+}
 
-      if (sub === "export") {
-        let out = "";
-        for (const r of Object.values(roles)) {
-          out += `${r.label}: ${r.users.join(", ") || "—"}\n`;
-        }
-        await interaction.reply({ content: "```\n" + out + "\n```", ephemeral: true });
-      }
+if (sub === "export") {
+  await interaction.deferReply({ ephemeral: true });
+
+  let out = "";
+  for (const r of Object.values(roles)) {
+    out += `${r.label}: ${r.users.join(", ") || "—"}\n`;
+  }
+
+  await interaction.editReply("```\n" + out + "\n```");
+}
     }
   }
 
