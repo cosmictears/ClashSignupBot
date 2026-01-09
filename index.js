@@ -55,18 +55,30 @@ function clearUser(user) {
 
 function buttonsRows() {
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("top").setLabel("🛡️ Top").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("jungle").setLabel("🌲 Jungle").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("mid").setLabel("✨ Mid").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("adc").setLabel("🏹 ADC").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("support").setLabel("💙 Support").setStyle(ButtonStyle.Primary)
+    new ButtonBuilder().setCustomId("top").setLabel("🛡️ Top").setStyle(ButtonStyle.Primary)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("jungle").setLabel("🌲 Jungle").setStyle(ButtonStyle.Primary)
+  );
+
+  const row3 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("mid").setLabel("✨ Mid").setStyle(ButtonStyle.Primary)
+  );
+
+  const row4 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("adc").setLabel("🏹 ADC").setStyle(ButtonStyle.Primary)
+  );
+
+  const row5 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId("support").setLabel("💙 Support").setStyle(ButtonStyle.Primary)
+  );
+
+  const row6 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId("sub").setLabel("🔄 Sub").setStyle(ButtonStyle.Secondary)
   );
 
-  return [row1, row2];
+  return [row1, row2, row3, row4, row5, row6];
 }
 
 client.on("interactionCreate", async interaction => {
