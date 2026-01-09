@@ -59,34 +59,14 @@ function clearUser(user) {
 
 // === BUTTON ROWS BUILDER (SAFE FOR DISCORD) ===
 function buttonsRows() {
-  // Ensure max 5 buttons per row and max 5 rows per message
-  const rows = [];
-
-  const roleKeys = Object.keys(roles);
-
-  // First 5 roles in row 1
-  const row1 = new ActionRowBuilder().addComponents(
-    ...roleKeys.slice(0, 5).map(key =>
+  return Object.entries(roles).map(([key, role]) => {
+    return new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(key)
-        .setLabel(roles[key].label)
+        .setLabel(role.label)
         .setStyle(key === "sub" ? ButtonStyle.Secondary : ButtonStyle.Primary)
-    )
-  );
-  rows.push(row1);
-
-  // Any remaining roles in next row (sub only in this case)
-  const row2 = new ActionRowBuilder().addComponents(
-    ...roleKeys.slice(5).map(key =>
-      new ButtonBuilder()
-        .setCustomId(key)
-        .setLabel(roles[key].label)
-        .setStyle(ButtonStyle.Secondary)
-    )
-  );
-  if (row2.components.length > 0) rows.push(row2);
-
-  return rows;
+    );
+  });
 }
 
 // === INTERACTION HANDLER ===
