@@ -10,10 +10,12 @@ import {
   Routes
 } from "discord.js";
 
+// === CLIENT SETUP ===
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
+// === ROLES CONFIG ===
 const roles = {
   top: { label: "🛡️ Top", max: 1, users: [] },
   jungle: { label: "🌲 Jungle", max: 1, users: [] },
@@ -26,6 +28,7 @@ const roles = {
 let locked = false;
 let signupMessageId = null;
 
+// === EMBED BUILDER ===
 function buildEmbed() {
   const embed = new EmbedBuilder()
     .setTitle("🏆 CLASH TEAM SIGNUP")
@@ -46,6 +49,7 @@ function buildEmbed() {
   return embed;
 }
 
+// === CLEAR USER FROM ALL ROLES ===
 function clearUser(user) {
   for (const r of Object.values(roles)) {
     const i = r.users.indexOf(user);
@@ -53,61 +57,75 @@ function clearUser(user) {
   }
 }
 
+// === BUTTON ROWS BUILDER (SAFE FOR DISCORD) ===
 function buttonsRows() {
+  // Ensure max 5 buttons per row and max 5 rows per message
+  const rows = [];
+
+  const roleKeys = Object.keys(roles);
+
+  // First 5 roles in row 1
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("top").setLabel("🛡️ Top").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("jungle").setLabel("🌲 Jungle").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("mid").setLabel("✨ Mid").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("adc").setLabel("🏹 ADC").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("support").setLabel("💙 Support").setStyle(ButtonStyle.Primary)
+    ...roleKeys.slice(0, 5).map(key =>
+      new ButtonBuilder()
+        .setCustomId(key)
+        .setLabel(roles[key].label)
+        .setStyle(key === "sub" ? ButtonStyle.Secondary : ButtonStyle.Primary)
+    )
   );
+  rows.push(row1);
 
+  // Any remaining roles in next row (sub only in this case)
   const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("sub").setLabel("🔄 Sub").setStyle(ButtonStyle.Secondary)
+    ...roleKeys.slice(5).map(key =>
+      new ButtonBuilder()
+        .setCustomId(key)
+        .setLabel(roles[key].label)
+        .setStyle(ButtonStyle.Secondary)
+    )
   );
+  if (row2.components.length > 0) rows.push(row2);
 
-  return [row1, row2];
+  return rows;
 }
 
-
+// === INTERACTION HANDLER ===
 client.on("interactionCreate", async interaction => {
   try {
-    if (interaction.isChatInputCommand()) {
-      if (interaction.commandName === "clash") {
-        const sub = interaction.options.getSubcommand();
+    if (interaction.isChatInputCommand() && interaction.commandName === "clash") {
+      const sub = interaction.options.getSubcommand();
 
-        if (sub === "create") {
-          await interaction.deferReply({ ephemeral: true });
+      if (sub === "create") {
+        await interaction.deferReply({ ephemeral: true });
 
-          for (const r of Object.values(roles)) r.users = [];
-          locked = false;
+        for (const r of Object.values(roles)) r.users = [];
+        locked = false;
 
-          const msg = await interaction.channel.send({
-            embeds: [buildEmbed()],
-            components: buttonsRows()
-          });
+        const msg = await interaction.channel.send({
+          embeds: [buildEmbed()],
+          components: buttonsRows()
+        });
 
-          signupMessageId = msg.id;
+        signupMessageId = msg.id;
 
-          await interaction.editReply("Clash signup created.");
+        await interaction.editReply("Clash signup created.");
+      }
+
+      if (sub === "lock") {
+        await interaction.deferReply({ ephemeral: true });
+        locked = true;
+        await interaction.editReply("Signups locked.");
+      }
+
+      if (sub === "export") {
+        await interaction.deferReply({ ephemeral: true });
+
+        let out = "";
+        for (const r of Object.values(roles)) {
+          out += `${r.label}: ${r.users.join(", ") || "—"}\n`;
         }
 
-        if (sub === "lock") {
-          await interaction.deferReply({ ephemeral: true });
-          locked = true;
-          await interaction.editReply("Signups locked.");
-        }
-
-        if (sub === "export") {
-          await interaction.deferReply({ ephemeral: true });
-
-          let out = "";
-          for (const r of Object.values(roles)) {
-            out += `${r.label}: ${r.users.join(", ") || "—"}\n`;
-          }
-
-          await interaction.editReply("```\n" + out + "\n```");
-        }
+        await interaction.editReply("```\n" + out + "\n```");
       }
     }
 
@@ -142,10 +160,12 @@ client.on("interactionCreate", async interaction => {
   }
 });
 
+// === READY EVENT ===
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
+// === SLASH COMMANDS ===
 const commands = [
   new SlashCommandBuilder()
     .setName("clash")
@@ -155,7 +175,7 @@ const commands = [
     .addSubcommand(s => s.setName("export").setDescription("Export team"))
 ];
 
-// Wrap all async startup in main()
+// === ASYNC STARTUP ===
 async function main() {
   try {
     const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
