@@ -70,66 +70,74 @@ function buttonsRows() {
 }
 
 client.on("interactionCreate", async interaction => {
-  if (interaction.isChatInputCommand()) {
-    if (interaction.commandName === "clash") {
-      const sub = interaction.options.getSubcommand();
+  try {
+    if (interaction.isChatInputCommand()) {
+      if (interaction.commandName === "clash") {
+        const sub = interaction.options.getSubcommand();
 
-      if (sub === "create") {
-  await interaction.deferReply({ ephemeral: true });
+        if (sub === "create") {
+          await interaction.deferReply({ ephemeral: true });
 
-  for (const r of Object.values(roles)) r.users = [];
-  locked = false;
+          for (const r of Object.values(roles)) r.users = [];
+          locked = false;
 
-  const msg = await interaction.channel.send({
-    embeds: [buildEmbed()],
-    components: buttonsRows()
-  });
+          const msg = await interaction.channel.send({
+            embeds: [buildEmbed()],
+            components: buttonsRows()
+          });
 
-  signupMessageId = msg.id;
+          signupMessageId = msg.id;
 
-  await interaction.editReply("Clash signup created.");
-}
-      if (sub === "lock") {
-  await interaction.deferReply({ ephemeral: true });
-  locked = true;
-  await interaction.editReply("Signups locked.");
-}
+          await interaction.editReply("Clash signup created.");
+        }
 
-if (sub === "export") {
-  await interaction.deferReply({ ephemeral: true });
+        if (sub === "lock") {
+          await interaction.deferReply({ ephemeral: true });
+          locked = true;
+          await interaction.editReply("Signups locked.");
+        }
 
-  let out = "";
-  for (const r of Object.values(roles)) {
-    out += `${r.label}: ${r.users.join(", ") || "—"}\n`;
-  }
+        if (sub === "export") {
+          await interaction.deferReply({ ephemeral: true });
 
-  await interaction.editReply("```\n" + out + "\n```");
-}
-    }
-  }
+          let out = "";
+          for (const r of Object.values(roles)) {
+            out += `${r.label}: ${r.users.join(", ") || "—"}\n`;
+          }
 
-  if (interaction.isButton()) {
-    if (locked) {
-      return interaction.reply({ content: "Signups are locked.", ephemeral: true });
+          await interaction.editReply("```\n" + out + "\n```");
+        }
+      }
     }
 
-    if (interaction.message.id !== signupMessageId) return;
+    if (interaction.isButton()) {
+      if (locked) {
+        return interaction.reply({ content: "Signups are locked.", ephemeral: true });
+      }
 
-    const role = roles[interaction.customId];
-    if (!role) return;
+      if (interaction.message.id !== signupMessageId) return;
 
-    clearUser(interaction.user.username);
+      const role = roles[interaction.customId];
+      if (!role) return;
 
-    if (role.users.length >= role.max) {
-      return interaction.reply({ content: "That role is full.", ephemeral: true });
+      clearUser(interaction.user.username);
+
+      if (role.users.length >= role.max) {
+        return interaction.reply({ content: "That role is full.", ephemeral: true });
+      }
+
+      role.users.push(interaction.user.username);
+
+      await interaction.update({
+        embeds: [buildEmbed()],
+        components: buttonsRows()
+      });
     }
-
-    role.users.push(interaction.user.username);
-
-    await interaction.update({
-      embeds: [buildEmbed()],
-      components: buttonsRows()
-    });
+  } catch (err) {
+    console.error("Interaction error:", err);
+    if (interaction.isCommand() && !interaction.replied) {
+      await interaction.reply({ content: "An error occurred.", ephemeral: true }).catch(() => {});
+    }
   }
 });
 
@@ -146,14 +154,25 @@ const commands = [
     .addSubcommand(s => s.setName("export").setDescription("Export team"))
 ];
 
-const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
+// Wrap all async startup in main()
+async function main() {
+  try {
+    const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
-await rest.put(
-  Routes.applicationGuildCommands(
-    process.env.CLIENT_ID,
-    process.env.GUILD_ID
-  ),
-  { body: commands }
-);
+    await rest.put(
+      Routes.applicationGuildCommands(
+        process.env.CLIENT_ID,
+        process.env.GUILD_ID
+      ),
+      { body: commands }
+    );
 
-client.login(process.env.DISCORD_TOKEN);
+    await client.login(process.env.DISCORD_TOKEN);
+
+    console.log("Bot deployed and ready!");
+  } catch (error) {
+    console.error("Error starting bot:", error);
+  }
+}
+
+main();
