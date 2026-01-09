@@ -59,6 +59,7 @@ function clearUser(user) {
 
 // === BUTTON ROWS BUILDER (SAFE FOR DISCORD) ===
 function buttonsRows() {
+  // Return an array of ActionRows, 1 button per row
   return Object.entries(roles).map(([key, role]) => {
     return new ActionRowBuilder().addComponents(
       new ButtonBuilder()
